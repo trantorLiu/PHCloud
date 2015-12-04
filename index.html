@@ -17,7 +17,7 @@ var cloud = d3.layout.cloud;
 var fill = d3.scale.category20();
 
 var layout = cloud()
-    .size([$(window).width(), $(window).height()])
+    .size([$(window).width() - 20, $(window).height() - 20])
     .words(keywords)
     .padding(5)
     .rotate(function() { return getRandomInt(-2, 2) * 30; })
