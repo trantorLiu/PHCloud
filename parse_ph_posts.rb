@@ -25,7 +25,7 @@ keywords = text.keywords.top(3000)
 
 # Only nouns are cousidered.
 whitelist = %w(
-  gif resume curated)
+  gif gifs resume resumes curated)
 keywords = keywords.select do |k|
   k.text.category == 'noun' || whitelist.include?(k.text)
 end
@@ -48,7 +48,7 @@ keywords = keywords.map do |k|
     size: 10 + (k.weight / keywords[0].weight) * 90
   }
 end
-output.write "var keywords = #{keywords.to_json}"
+output.write "phcloud.keywords = #{keywords.to_json}"
 output.close
 
 p "#{keywords.size} ketwords"

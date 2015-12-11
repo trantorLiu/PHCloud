@@ -6,62 +6,101 @@
 
 <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-<script src="assets/d3.layout.cloud.js"></script>
-<script src="outputs/keywords.js" charset="utf-8"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js" charset="utf-8"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
 
+<script src="assets/vendor/d3.layout.cloud.js"></script>
+<script src="assets/vendor/Chart.StackedBar.js"></script>
+
+<!-- Init phcloud object -->
+<script src="assets/init.js" charset="utf-8"></script>
+<script src="assets/keywords.js" charset="utf-8"></script>
+<script src="assets/cloud.js" charset="utf-8"></script>
+
+<!-- Algolia -->
+<script src="http://cdn.jsdelivr.net/algoliasearch/3/algoliasearch.min.js"></script>
 <script>
-
-var cloud = d3.layout.cloud;
-
-var fill = d3.scale.category20();
-
-var layout = cloud()
-    .size([$(window).width() - 20, $(window).height() - 60]) // Minus 60px for footer
-    .words(keywords)
-    .padding(5)
-    .rotate(function() { return getRandomInt(-2, 2) * 30; })
-    .font("Impact")
-    .fontSize(function(d) { return d.size; })
-    .on("end", draw);
-
-function draw(words) {
-  d3.select("body .container").append("svg")
-      .attr("width", layout.size()[0])
-      .attr("height", layout.size()[1])
-    .append("g")
-      .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
-    .selectAll("text")
-      .data(words)
-    .enter().append("text")
-      .style("font-size", function(d) { return d.size + "px"; })
-      .style("font-family", "Impact")
-      .style("fill", function(d, i) { return fill(i); })
-      .attr("text-anchor", "middle")
-      .attr("transform", function(d) {
-        return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
-      })
-      .text(function(d) { return d.text; });
-}
-
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min)) + min;
-}
-
-$(function() {
-  layout.start();
-});
-
+  var client = algoliasearch("XIMRNVJLQ7", "76a2352482770325c4963a6b20110b58"); // public credentials
+  phcloud.index = client.initIndex('phcloud');
 </script>
 
+<script src="assets/modal.js" charset="utf-8"></script>
+
+<!-- Templates -->
+<script id="posts-template" type="text/x-handlebars-template">
+  <div class="posts">
+    {{#each posts}}
+    <div class="row post">
+      <div class="col-md-1 votes text-center">
+        <span class="glyphicon glyphicon-triangle-top"></span>
+        <br />
+        {{votes_count}}
+      </div>
+      <div class="col-md-2 image-container">
+        <img src="{{screenshot_url.300px}}" class="img-responsive" />
+      </div>
+      <div class="col-md-9">
+        <h3>{{name}}</h3>
+        <div class="body">
+          {{tagline}}
+        </div>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</script>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 <style>
-  body {
-    padding: 0;
-    margin: 0;
+  html, body {
+    margin:0;
+    padding:0;
+    height:100%;
   }
 
-  .container {
-    padding: 10px;
+  svg text {
+    cursor: pointer;
   }
+
+  .modal .modal-dialog {
+    margin: 0;
+    height: 100%;
+    float: right;
+  }
+
+  @media (min-width: 992px) {
+    .modal-lg {
+      width: 1200px;
+    }
+  }
+
+  .modal .modal-dialog .modal-content {
+    min-height: 100%;
+    border-radius: 0;
+    border-top: none;
+    border-bottom: none;
+    box-shadow: none;
+  }
+
+  .modal .modal-body {
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+  }
+
+  .post {
+    margin-bottom: 20px;
+  }
+
+  .post .image-container {
+    padding-left: 0;
+  }
+
+  .post .votes {
+    margin-top: 32px;
+  }
+
   footer {
     position: fixed;
     bottom: 0;
@@ -90,18 +129,44 @@ $(function() {
 </head>
 
 <body>
+  <div class="container-fluid">
 
-<div class="container"></div>
+    <div class="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h3 class="modal-title"></h3>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="votes-bar-chart-container col-md-12">
+                <h4>Votes Distribution</h4>
+                <canvas id="votes-bar-chart" height="400" width="1200"></canvas>
+              </div>
+            </div>
 
-<!-- Fork me on GitHub -->
-<a href="https://github.com/trantorLiu/PHCloud"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+            <hr />
 
-<footer>
-  Made with <span class="heart">&hearts;</span> by
-  <a href="https://www.codementor.io">
-    Codementor
-  </a>
-</footer>
+            <div class="posts"></div>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="cloud"></div>
+
+    <!-- Fork me on GitHub -->
+    <a href="https://github.com/trantorLiu/PHCloud"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+  </div>
+
+  <footer>
+    Made with <span class="heart">&hearts;</span> by
+    <a href="https://www.codementor.io">
+      Codementor
+    </a>
+  </footer>
+
 </body>
 
 </html>
