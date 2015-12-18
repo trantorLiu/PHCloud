@@ -6,7 +6,9 @@ $(function() {
   $('svg text').click(openModal);
 
   function openModal(e) {
-    phcloud.index.search($(e.currentTarget).text(), searchCallback);
+    phcloud.index.search($(e.currentTarget).text(), {
+      hitsPerPage: 30
+    }, searchCallback);
   }
 
   function searchCallback(err, res) {
