@@ -3,11 +3,11 @@ $(function() {
 
   var layout = cloud()
       .size([$(window).width() - 20, $(window).height() - 60]) // Minus 60px for footer
-      .words(phcloud.keywords)
+      .words(_.first(phcloud.keywords, 300))
       .padding(5)
       .rotate(function() { return getRandomInt(-2, 2) * 30; })
       .font("Impact")
-      .fontSize(function(d) { return d.score * 12 + 5; })
+      .fontSize(function(d) { return d.score / 300 * 120 + 5; })
       .on("end", draw);
 
   function draw(words) {
